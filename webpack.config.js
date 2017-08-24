@@ -6,36 +6,43 @@ const url = require('url')
 
 const publicPath = '';
 
-module.exports = function(env){
+module.exports = function(){
+    var env={}
+    env.dev=process.env.NODE_ENV !== 'production'
+    console.log("开发状态---",env.dev)
     return {
         entry: {
-            vendor: './src/vendor',
+            vendor: './src/vendor.js',
             index: './src/index.js'
         },
         output: {
-            filename: env.dev?'bundle.js':'bundle.js?[chunkhash]',
+            filename: env.dev?'[name].js':'[name].[chunkhash].js',
             path: path.resolve(__dirname, 'dist'),
-            publicPath: env.dev ? '/src/' : publicPath
-        }, plugins: [
+            publicPath: env.dev ? '/' : publicPath
+        }, plugins: env.dev ?[
             new webpack.optimize.CommonsChunkPlugin({
                 names: ['vendor', 'manifest']
             }),
-            new CleanWebpackPlugin(['dist']),
             new HtmlWebpackPlugin({
                 template: 'src/index.html'
             }),
             new webpack.HotModuleReplacementPlugin()
-
+        ]:[
+            new CleanWebpackPlugin(['dist']),
+            new webpack.optimize.CommonsChunkPlugin({
+                names: ['vendor', 'manifest']
+            }),
+            new HtmlWebpackPlugin({
+                template: 'src/index.html'
+            })
         ],
         //不要用于生产环境
         devtool: env.dev ? '#eval-source-map' : '#source-map',
         devServer:{
-            contentBase:"./dist",
-            hot: true,
-            historyApiFallback: {
-                index: url.parse(env.dev ? '/assets/' : publicPath).pathname
-            }
 
+            historyApiFallback: {
+                index: url.parse(env.dev ? '/' : publicPath).pathname
+            }
         },
         module: {
             rules: [
